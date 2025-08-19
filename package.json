@@ -1,0 +1,24 @@
+{
+  "name": "archant-testing-automation-codeceptjs",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Seph-Santander/Archant-Testing-Automation.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Seph-Santander/Archant-Testing-Automation/issues"
+  },
+  "homepage": "https://github.com/Seph-Santander/Archant-Testing-Automation#readme",
+  "description": "",
+  "devDependencies": {
+    "codeceptjs": "^3.7.3",
+    "webdriverio": "^9.19.1"
+  }
+}
