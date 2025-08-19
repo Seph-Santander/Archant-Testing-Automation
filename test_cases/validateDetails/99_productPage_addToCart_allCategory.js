@@ -2,33 +2,45 @@ const { assertProductCategory } = require('../component/Product_Category');
 const { addingProductbyCategory } = require('../component/add_to_cart');
 const categories = require('../component/categories');
 
-Feature('User Login as Guest, then Add to Cart Product to each of Category');
+Feature('User Login as Guest, then Add to Cart Product to each Category');
 
-Scenario('User Login as Guest, then Add to Cart Product', async ({ I }) => {
-    // ===== User input =====
-    const category = 'handles'; // e.g. sinks, taps, handles, surfaces, wovenpanel, accessories, lights, clearance
-    let subCategory = ''; // can be empty or wrong
+// ===== User-defined inputs =====
+// Assign subCategory per category
+const userSelections = {
+    sinks:      { subCategory: 'Double bowl' /*, productName: 'Robiq 450/200-15 RV' */ },
+    taps:       { subCategory: 'Classic' /*, productName: 'Okura, Chrome' */ },
+    handles:    { subCategory: 'Continuous Profile Handles' /*, productName: 'Ezi-Venice 16, 2500mm, Anodised' */ },
+    surfaces:   { subCategory: 'Florim Porcelain' /*, productName: 'Marble Breach A, Matte, 3200x1600x12mm' */ },
+    wovenpanel: { subCategory: '', /*productName: '' */},
+    accessories:{ subCategory: 'Sinks' /*, productName: 'Hot Mat, Stainless Steel' */ },
+    lights:     { subCategory: '', /*productName: '' */},
+    clearance:  { subCategory: '', /*productName: ''*/ }
+};
 
-    // ===== Validation =====
-    if (!categories[category]) {
-        throw new Error(`❌ Category "${category}" is not supported. Valid options are: ${Object.keys(categories).join(', ')}`);
-    }
-
-    const subCategories = categories[category];
-
-    if (!subCategory || subCategory.trim() === '') {
-        // Random selection if none provided
-        subCategory = subCategories[Math.floor(Math.random() * subCategories.length)];
-        console.log(`⚡ Randomly selected subcategory: ${subCategory}`);
-    } else if (!subCategories.includes(subCategory)) {
-        throw new Error(`❌ Subcategory "${subCategory}" does not belong to category "${category}". Valid subcategories: ${subCategories.join(', ')}`);
-    }
-
-    // ===== Test flow =====
+Scenario('User Login as Guest, then Add to Cart Product from each Category', async ({ I }) => {
     I.amOnPage('/');
-    await assertProductCategory(I);
-    await addingProductbyCategory(I, category, subCategory);
 
-    I.say(`✅ Added product from ${category} → ${subCategory}`);
-    I.wait(5);
+    for (const category of Object.keys(categories)) {
+        // Safely destructure with defaults (ignore productName for now)
+        let { subCategory /*, productName */ } = userSelections[category] || {};
+
+        const subCategories = categories[category];
+
+        // === SubCategory validation ===
+        if (!subCategory || subCategory.trim() === '') {
+            subCategory = subCategories[Math.floor(Math.random() * subCategories.length)];
+            console.log(`⚡ [${category}] Randomly selected subcategory: ${subCategory}`);
+        } else if (!subCategories.includes(subCategory)) {
+            throw new Error(`❌ Subcategory "${subCategory}" is invalid for category "${category}". Valid: ${subCategories.join(', ')}`);
+        }
+
+        // === Step 1: Assert category page ===
+        await assertProductCategory(I, category);
+
+        // === Step 2: Navigate & select product ===
+        await addingProductbyCategory(I, category, subCategory /*, productName */);
+        I.wait(5);
+    }
+
+    I.wait(10);
 });

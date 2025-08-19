@@ -41,8 +41,6 @@ module.exports = {
         "Handles",
         "Surfaces"
     ],
-    lights: [
-        "Toki Lights"
-    ],
+    lights: [], // no subcategories
     clearance: [] // no subcategories
 };

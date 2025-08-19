@@ -6,52 +6,48 @@ async function addingProductbyCategory(I, category, subCategory) {
             await I.click('a[href*="shop/sinks.html"]');
             await I.seeInCurrentUrl('/shop/sinks.html');
             break;
-
         case 'taps':
             await I.click('a[href*="shop/taps.html"]');
             await I.seeInCurrentUrl('/shop/taps.html');
             break;
-
         case 'handles':
             await I.click('a[href*="shop/handles.html"]');
             await I.seeInCurrentUrl('/shop/handles.html');
             break;
-
         case 'surfaces':
             await I.click('a[href*="shop/surfaces.html"]');
             await I.seeInCurrentUrl('/shop/surfaces.html');
             break;
-
         case 'wovenpanel':
             await I.click('a[href*="shop/wovenpanel.html"]');
             await I.seeInCurrentUrl('/shop/wovenpanel.html');
             break;
-
         case 'accessories':
             await I.click('a[href*="shop/accessories.html"]');
             await I.seeInCurrentUrl('/shop/accessories.html');
             break;
-
         case 'lights':
             await I.click('a[href*="shop/lights.html"]');
             await I.seeInCurrentUrl('/shop/lights.html');
             break;
-
         case 'clearance':
             await I.click('a[href*="archant-outlet"]');
             await I.switchToNextTab();
             break;
-
         default:
             throw new Error(`❌ Category "${category}" not supported!`);
     }
 
     await I.say(`✅ Navigated to main category: ${category}`);
 
-    // Step 2: Handle subcategory selection
-    const subCategorySelector = 'div.filter-options-content ol.items li.item a';
+    // Skip subcategory selection if no subcategories exist
+    const subCategoriesExist = Array.isArray(subCategory) || (typeof subCategory === 'string' && subCategory.trim() !== '');
+    if (!subCategoriesExist) {
+        await I.say(`⚠️ No subcategories for category: ${category}, skipping subcategory selection`);
+        return;
+    }
 
-    // 🔹 Small helper to animate indicator before clicking
+    // Helper: animate highlight
     async function highlightElement(locator) {
         await I.executeScript((sel) => {
             const el = document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -65,37 +61,20 @@ async function addingProductbyCategory(I, category, subCategory) {
                 }, 400);
             }
         }, locator);
-        await I.wait(1); // let animation be visible
+        await I.wait(0.5);
     }
 
+    // Step 2: Handle subcategory selection if subCategory is provided
     if (subCategory) {
-        // User gave a subcategory
         const locator = `//div[@class="filter-options-content"]//a[contains(normalize-space(), "${subCategory}")]`;
-        await I.waitForElement(locator, 5);
-
-        await highlightElement(locator);   // 👈 indicator before click
-        await I.moveCursorTo(locator);
-        await I.wait(2);
-        await I.click(locator);
-
-        await I.say(`✅ Selected subcategory: ${subCategory}`);
-    } else {
-        // No subcategory given → random pick
-        const links = await I.grabAttributeFrom(subCategorySelector, 'href');
-        const texts = await I.grabTextFrom(subCategorySelector);
-
-        const randomIndex = Math.floor(Math.random() * links.length);
-        const randomLink = links[randomIndex];
-        const randomText = texts[randomIndex].trim();
-
-        const randomLocator = `//a[@href="${randomLink}"]`;
-
-        await highlightElement(randomLocator); // 👈 indicator before click
-        await I.moveCursorTo(randomLocator);
-        await I.wait(2);
-        await I.click(randomLocator);
-
-        await I.say(`🎲 Randomly selected subcategory: ${randomText}`);
+        const exists = await I.grabNumberOfVisibleElements(locator);
+        if (exists > 0) {
+            await highlightElement(locator);
+            await I.click(locator);
+            await I.say(`✅ Selected subcategory: ${subCategory}`);
+        } else {
+            await I.say(`⚠️ Subcategory "${subCategory}" not found, skipping`);
+        }
     }
 }
 
