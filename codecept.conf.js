@@ -12,7 +12,7 @@ exports.config = {
   output: './output',
   helpers: {
     WebDriver: {
-      url: 'http://localhost',
+      url: 'https://archant246.1902dev1.com',
       browser: 'chrome'
     }
   },
