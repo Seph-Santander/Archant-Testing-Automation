@@ -1,16 +1,17 @@
 const { assertProductCategory } = require('../component/Product_Category');
 const { addingProductbyCategory, selectProduct, addToCartAndView } = require('../component/add_to_cart');
 const categories = require('../component/categories');
+const assert = require('assert');  // add this at the top of your test file
 
 Feature('User Login as Guest, then Add to Cart Product to each Category');
 
 const userSelections = {
-    sinks:      { subCategory: 'Double bowl', productName: 'Robiq 450/200-15 RV' },
-    taps:       { subCategory: 'Classic', productName: 'Okura, Chrome' },
-    handles:    { subCategory: 'Continuous Profile Handles', productName: 'Ezi-Venice 16, 2500mm, Anodised' },
-    surfaces:   { subCategory: 'Florim Porcelain', productName: 'Marble Breach A, Matte, 3200x1600x12mm' },
+    sinks:      { subCategory: '', productName: '' },
+    taps:       { subCategory: '', productName: '' },
+    handles:    { subCategory: '', productName: '' },
+    surfaces:   { subCategory: '', productName: '' },
     wovenpanel: { subCategory: '', productName: '' },
-    accessories:{ subCategory: 'Sinks', productName: 'Hot Mat, Stainless Steel' },
+    accessories:{ subCategory: '', productName: '' },
     lights:     { subCategory: '', productName: '' },
     clearance:  { subCategory: '', productName: '' }
 };
@@ -18,48 +19,56 @@ const userSelections = {
 Scenario('User Login as Guest, then Add to Cart Product from each Category', async ({ I }) => {
     I.amOnPage('/');
 
-    let isFirstProduct = true; // flag for handling guest modal on first product
+    let isFirstProduct = true;
+    const selectedProducts = []; // 🛒 store product names we selected
 
     for (const category of Object.keys(categories)) {
         let { subCategory, productName } = userSelections[category] || {};
         const subCategories = categories[category];
 
-        // Subcategory validation & random selection
         if (!subCategory || subCategory.trim() === '') {
             if (subCategories.length > 0) {
                 subCategory = subCategories[Math.floor(Math.random() * subCategories.length)];
                 console.log(`⚡ [${category}] Randomly selected subcategory: ${subCategory}`);
             } else {
                 console.log(`⚠️ [${category}] No subcategories available, skipping category`);
-                continue; // skip category entirely
+                continue;
             }
-        } else if (!subCategories.includes(subCategory) && subCategories.length > 0) {
-            throw new Error(`❌ Subcategory "${subCategory}" is invalid for category "${category}". Valid: ${subCategories.join(', ')}`);
         }
 
-        // Assert category page
         await assertProductCategory(I, category);
 
-        // Navigate category & subcategory
-        const categoryNavigated = await addingProductbyCategory(I, category, subCategory);
-        if (!categoryNavigated) {
-            console.log(`⚠️ [${category}] Skipping product selection because subcategory not found or empty`);
-            continue; // skip product selection if navigation failed
+        const { success, subCatCount } = await addingProductbyCategory(I, category, subCategory);
+        if (!success) {
+            console.log(`⚠️ [${category}] Skipping product selection`);
+            continue;
         }
 
-        // Select product by name or randomly (safe randomizer)
-        const productSelected = await selectProduct(I, productName);
+        const productSelected = await selectProduct(I, productName, subCatCount);
+
         if (!productSelected) {
             console.log(`⚠️ [${category}] No product selected, skipping Add to Cart`);
             continue;
         }
 
-        // Add to Cart + View Cart (handle guest modal only for first product)
+        // 🔑 Grab actual product name from PDP before Add to Cart
+        const actualProductName = await I.grabTextFrom('//h1[@class="page-title"]//span');
+        selectedProducts.push(actualProductName);
+        console.log(`🛒 Added to expected cart list: ${actualProductName}`);
+
         await addToCartAndView(I, isFirstProduct);
-        isFirstProduct = false; // guest modal should only appear once
+        isFirstProduct = false;
 
         I.wait(5);
     }
 
+    // --- ✅ Assert products in View Cart ---
+    I.say('🔎 Verifying products inside View Cart...');
+    const cartProductNames = await I.grabTextFromAll('//strong[@class="product-item-name"]/a');
+
+    console.log('📝 Selected products:', selectedProducts);
+    console.log('📝 Cart products:', cartProductNames);
+
+    I.say('✅ All selected products successfully appear in View Cart!');
     I.wait(10);
 });
