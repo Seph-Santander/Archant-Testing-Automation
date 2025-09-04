@@ -20,7 +20,7 @@ Scenario('User Login as Guest, then Add to Cart Product from each Category', asy
     I.amOnPage('/');
 
     let isFirstProduct = true;
-    const selectedProducts = []; // 🛒 store product names we selected
+    const selectedProducts = [];
 
     for (const category of Object.keys(categories)) {
         let { subCategory, productName } = userSelections[category] || {};
@@ -29,9 +29,9 @@ Scenario('User Login as Guest, then Add to Cart Product from each Category', asy
         if (!subCategory || subCategory.trim() === '') {
             if (subCategories.length > 0) {
                 subCategory = subCategories[Math.floor(Math.random() * subCategories.length)];
-                console.log(`⚡ [${category}] Randomly selected subcategory: ${subCategory}`);
+                console.log(`[${category}] Randomly selected subcategory: ${subCategory}`);
             } else {
-                console.log(`⚠️ [${category}] No subcategories available, skipping category`);
+                console.log(`[${category}] No subcategories available, skipping category`);
                 continue;
             }
         }
@@ -40,21 +40,21 @@ Scenario('User Login as Guest, then Add to Cart Product from each Category', asy
 
         const { success, subCatCount } = await addingProductbyCategory(I, category, subCategory);
         if (!success) {
-            console.log(`⚠️ [${category}] Skipping product selection`);
+            console.log(`[${category}] Skipping product selection`);
             continue;
         }
 
         const productSelected = await selectProduct(I, productName, subCatCount);
 
         if (!productSelected) {
-            console.log(`⚠️ [${category}] No product selected, skipping Add to Cart`);
+            console.log(`[${category}] No product selected, skipping Add to Cart`);
             continue;
         }
 
-        // 🔑 Grab actual product name from PDP before Add to Cart
+        // Grab actual product name from PDP before Add to Cart
         const actualProductName = await I.grabTextFrom('//h1[@class="page-title"]//span');
         selectedProducts.push(actualProductName);
-        console.log(`🛒 Added to expected cart list: ${actualProductName}`);
+        console.log('Added to expected cart list:', actualProductName);
 
         await addToCartAndView(I, isFirstProduct);
         isFirstProduct = false;
@@ -62,13 +62,13 @@ Scenario('User Login as Guest, then Add to Cart Product from each Category', asy
         I.wait(5);
     }
 
-    // --- ✅ Assert products in View Cart ---
-    I.say('🔎 Verifying products inside View Cart...');
+    // --- Assert products in View Cart ---
+    I.say('Verifying products inside View Cart...');
     const cartProductNames = await I.grabTextFromAll('//strong[@class="product-item-name"]/a');
 
-    console.log('📝 Selected products:', selectedProducts);
-    console.log('📝 Cart products:', cartProductNames);
+    console.log('Selected products:', selectedProducts);
+    console.log('Cart products:', cartProductNames);
 
-    I.say('✅ All selected products successfully appear in View Cart!');
+    I.say('All selected products successfully appear in View Cart!');
     I.wait(10);
 });

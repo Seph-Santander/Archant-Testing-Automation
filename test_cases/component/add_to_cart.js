@@ -44,14 +44,14 @@ async function addingProductbyCategory(I, category, subCategory) {
             await I.switchToNextTab();
             break;
         default:
-            throw new Error(`❌ Category "${category}" not supported!`);
+            throw new Error(`Category "${category}" not supported!`);
     }
 
-    await I.say(`✅ Navigated to category: ${category}`);
+    await I.say(`Navigated to category: ${category}`);
     await I.wait(5);
 
     if (!subCategory || subCategory.trim() === '') {
-        await I.say(`⚠️ Category "${category}" has no subcategory, skipping product selection`);
+        await I.say(`Category "${category}" has no subcategory, skipping product selection`);
         return { success: false, subCatCount: 0 };
     }
 
@@ -67,17 +67,17 @@ async function addingProductbyCategory(I, category, subCategory) {
         }
 
         if (subCatCount === 0) {
-            await I.say(`⚠️ Subcategory "${subCategory}" has 0 items, skipping`);
+            await I.say(`Subcategory "${subCategory}" has 0 items, skipping`);
             return { success: false, subCatCount: 0 };
         }
 
         await highlightElement(I, subCategoryLocator);
         await I.click(subCategoryLocator);
-        await I.say(`✅ Selected subcategory: ${subCategory} (Items: ${subCatCount})`);
+        await I.say(`Selected subcategory: ${subCategory} (Items: ${subCatCount})`);
         await I.wait(5);
         return { success: true, subCatCount };
     } else {
-        await I.say(`⚠️ Subcategory "${subCategory}" not found, skipping product selection`);
+        await I.say(`Subcategory "${subCategory}" not found, skipping product selection`);
         return { success: false, subCatCount: 0 };
     }
 }
@@ -94,10 +94,10 @@ async function selectProduct(I, productName, subCatCount = 0) {
         productCount = subCatCount;
     }
 
-    await I.say(`📊 Product counts => visible: ${productCount}, from filter: ${subCatCount}`);
+    await I.say(`Product counts => visible: ${productCount}, from filter: ${subCatCount}`);
 
     if (productCount === 0) {
-        await I.say('⚠️ No products found in this category, skipping product selection');
+        await I.say('No products found in this category, skipping product selection');
         return false;
     }
 
@@ -109,7 +109,7 @@ async function selectProduct(I, productName, subCatCount = 0) {
         const exists = await I.grabNumberOfVisibleElements(productLocator);
 
         if (exists === 0) {
-            await I.say(`⚠️ Product "${productName}" not found, falling back to random`);
+            await I.say(`Product "${productName}" not found, falling back to random`);
             productLocator = null; // force random fallback
         }
     }
@@ -118,7 +118,7 @@ async function selectProduct(I, productName, subCatCount = 0) {
     if (!productLocator) {
         const randomIndex = Math.floor(Math.random() * productCount) + 1;
         productLocator = `(${productCardLocator})[${randomIndex}]//a[contains(@class,"product-item-link")]`;
-        await I.say(`🎲 Random product selected (Index: ${randomIndex}/${productCount})`);
+        await I.say(`Random product selected (Index: ${randomIndex}/${productCount})`);
     }
 
     await I.waitForElement(productLocator, 10);
@@ -133,7 +133,7 @@ async function selectProduct(I, productName, subCatCount = 0) {
 
     await highlightElement(I, productLocator);
     await I.click(productLocator);
-    await I.say(`✅ Product selected${productName ? `: ${productName}` : ' (random)'}`);
+    await I.say(`Product selected${productName ? `: ${productName}` : ' (random)'}`);
     await I.wait(2);
 
     return true;
@@ -147,14 +147,14 @@ async function addToCartAndView(I, isFirstProduct = false) {
 
     const addToCartExists = await I.grabNumberOfVisibleElements(addToCartBtn);
     if (addToCartExists === 0) {
-        await I.say('⚠️ "Add to cart" button not found, skipping this product (View Cart also skipped)');
+        await I.say('"Add to cart" button not found, skipping this product (View Cart also skipped)');
         await I.wait(5);
         return false;
     }
 
     await highlightElement(I, addToCartBtn);
     await I.click(addToCartBtn);
-    await I.say('✅ Clicked "Add to cart" button');
+    await I.say('Clicked "Add to cart" button');
     await I.wait(5);
 
     if (isFirstProduct) {
@@ -162,10 +162,10 @@ async function addToCartAndView(I, isFirstProduct = false) {
         if (guestExists > 0) {
             await highlightElement(I, continueAsGuestBtn);
             await I.click(continueAsGuestBtn);
-            await I.say('✅ Clicked "Continue as Guest"');
+            await I.say('Clicked "Continue as Guest"');
             await I.wait(5);
         } else {
-            await I.say('⚠️ "Continue as Guest" modal not found, skipping');
+            await I.say('"Continue as Guest" modal not found, skipping');
             await I.wait(5);
         }
     }
@@ -174,10 +174,10 @@ async function addToCartAndView(I, isFirstProduct = false) {
     if (viewCartExists > 0) {
         await highlightElement(I, viewCartBtn);
         await I.click(viewCartBtn);
-        await I.say('✅ Clicked "View Cart" button');
+        await I.say('Clicked "View Cart" button');
         await I.wait(5);
     } else {
-        await I.say('⚠️ "View Cart" button not found, skipping');
+        await I.say('"View Cart" button not found, skipping');
         await I.wait(5);
     }
 
@@ -188,7 +188,7 @@ async function addToCartAndView(I, isFirstProduct = false) {
 async function highlightElement(I, locator) {
     await I.executeScript((sel) => {
         let el = null;
-        // ✅ Treat (//...) as XPath too
+        // Treat (//...) as XPath too
         if (sel.startsWith('//') || sel.startsWith('.//') || sel.startsWith('(')) {
             el = document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         } else {

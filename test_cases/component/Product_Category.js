@@ -15,7 +15,7 @@ async function assertProductCategory(I) {
     I.see('Clearance Products', 'a[href*="archant-outlet"]');
 
     // Success message
-    I.say('✅ All submenu items under Products are visible');
+    I.say('All submenu items under Products are visible');
 
 }
 

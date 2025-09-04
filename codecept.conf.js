@@ -13,7 +13,8 @@ exports.config = {
   helpers: {
     WebDriver: {
       url: 'https://archant246.1902dev1.com',
-      browser: 'chrome'
+      browser: 'chrome',
+      windowSize: 'maximize',   // 🔥 makes browser fullscreen
     }
   },
   include: {
