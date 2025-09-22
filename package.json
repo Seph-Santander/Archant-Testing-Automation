@@ -18,6 +18,7 @@
   "homepage": "https://github.com/Seph-Santander/Archant-Testing-Automation#readme",
   "description": "",
   "devDependencies": {
+    "@codeceptjs/configure": "^1.0.6",
     "codeceptjs": "^3.7.3",
     "webdriverio": "^9.19.1"
   }
