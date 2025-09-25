@@ -8,11 +8,12 @@ async function backendLogin(I, username, password) {
 
     I.click('//button[span[text()="Sign in"]]');
     I.wait(5);
+
+    I.waitForElement('button[data-role="closeBtn"]', 10);
+    I.click('button[data-role="closeBtn"]');
 }
 
 async function setupBackend(I, inventoryClass = 'A', pageSetup = true) {
-    I.waitForElement('button[data-role="closeBtn"]', 10);
-    I.click('button[data-role="closeBtn"]');
 
     I.waitForElement('li#menu-magento-catalog-catalog > a', 10);
     I.click('li#menu-magento-catalog-catalog > a');
@@ -202,11 +203,17 @@ async function assertingPreOrderProducts(I, productStocks) {
         try {
             // open search input by clicking magnifier
             I.click('i.icon-magnifier.icons');
+
+            // wait for the actual search field used in your theme
+            I.waitForElement('#search-input-autocomplate', 10);
             I.fillField('#search-input-autocomplate', name);
             I.pressKey('Enter');
-            I.waitForElement('a.product-item-link', 20);
 
-            const links = await I.grabAttributeFrom('a.product-item-link', 'href');
+            // wait for either results grid or "no results" message
+            I.waitForElement('.products.wrapper.grid, .message.notice', 20);
+
+            // grab all product links safely
+            const links = await I.grabAttributeFromAll('a.product-item-link', 'href');
 
             if (links.length > 0) {
                 I.click(locate('a.product-item-link').first());
@@ -219,7 +226,6 @@ async function assertingPreOrderProducts(I, productStocks) {
                 const preorderText =
                     'Great news! This item is now available for pre order. By placing your order now, we will dispatch it immediately upon stock arrival.';
 
-                // Convert qty to number (handles decimals properly)
                 const qtyNum = parseFloat(qty);
 
                 if (isNaN(qtyNum) || qtyNum <= 0) {
@@ -242,13 +248,14 @@ async function assertingPreOrderProducts(I, productStocks) {
                     }
                 }
             } else {
-                const fail = { name, qty, issue: "No product link found." };
+                const fail = { name, qty, issue: "No product link found in search results." };
                 failedProducts.push(fail);
                 I.say(`⚠️ Rule FAILED → ${fail.name} (Qty: ${fail.qty}) → ${fail.issue}`);
                 showFailedList(I, failedProducts);
+                continue;
             }
-        } catch {
-            const fail = { name, qty, issue: "Unexpected error during check." };
+        } catch (err) {
+            const fail = { name, qty, issue: `Unexpected error during check: ${err.message || err}` };
             failedProducts.push(fail);
             I.say(`⚠️ Rule FAILED → ${fail.name} (Qty: ${fail.qty}) → ${fail.issue}`);
             showFailedList(I, failedProducts);
@@ -276,9 +283,204 @@ function showFailedList(I, failedProducts) {
     });
 }
 
+async function assertingClassEProducts(I, productStocks) {
+    I.amOnPage('https://archant246.1902dev1.com/');
+
+    const failedProducts = [];
+    const expectedText =
+        'Upon completing your purchase, we will fulfil this order with the supplier. Please note, this product is not typically held in our New Zealand dispatch centres. As such, we recommend planning around slightly longer shipping times. Minimum order quantity (MOQ) may apply.';
+
+    for (const { name } of productStocks) {
+        I.say(`\n🔍 Searching for: ${name}`);
+
+        try {
+            // open search input by clicking magnifier
+            I.click('i.icon-magnifier.icons');
+
+            // wait for the actual search field used in your theme
+            I.waitForElement('#search-input-autocomplate', 10);
+            I.fillField('#search-input-autocomplate', name);
+            I.pressKey('Enter');
+
+            // wait for either results grid or "no results" message
+            I.waitForElement('.products.wrapper.grid, .message.notice', 20);
+
+            // grab all product links safely
+            const links = await I.grabAttributeFromAll('a.product-item-link', 'href');
+
+            if (links.length > 0) {
+                I.click(locate('a.product-item-link').first());
+                I.waitForElement('.page-title', 20);
+
+                const productTitle = await I.grabTextFrom('.page-title');
+                I.say(`Opened product page: ${productTitle}`);
+
+                const pageContent = await I.grabSource();
+
+                if (pageContent.includes(expectedText)) {
+                    I.say(`✅ Rule OK → "${name}" shows the required Class E message.`);
+                } else {
+                    const fail = { name, issue: "Expected Class E message not found." };
+                    failedProducts.push(fail);
+                    I.say(`❌ Rule FAILED → ${fail.name} → ${fail.issue}`);
+                    showFailedList(I, failedProducts);
+                }
+            } else {
+                const fail = { name, issue: "No product link found in search results." };
+                failedProducts.push(fail);
+                I.say(`⚠️ Rule FAILED → ${fail.name} → ${fail.issue}`);
+                showFailedList(I, failedProducts);
+                continue;
+            }
+        } catch (err) {
+            const fail = { name, issue: `Unexpected error during check: ${err.message || err}` };
+            failedProducts.push(fail);
+            I.say(`⚠️ Rule FAILED → ${fail.name} → ${fail.issue}`);
+            showFailedList(I, failedProducts);
+        }
+
+        I.wait(3);
+    }
+
+    if (failedProducts.length > 0) {
+        I.say("\n❌ Final Failed Products List:");
+        failedProducts.forEach((p, i) => {
+            I.say(`${i + 1}. ${p.name} → ${p.issue}`);
+        });
+    } else {
+        I.say("\n✅ All Class E products passed the rule checks!");
+    }
+}
+
+// 🔹 helper to show current failed list
+function showFailedList(I, failedProducts) {
+    I.say("\n📌 Current Failed List:");
+    failedProducts.forEach((p, i) => {
+        I.say(`${i + 1}. ${p.name} → ${p.issue}`);
+    });
+}
 
 
+async function assertingClassHProducts(I, productStocks) {
+    I.amOnPage('https://archant246.1902dev1.com/');
 
+    const failedProducts = [];
+    const expectedText =
+        'This unique item is made to order by our team of highly skilled artisans! Production begins when we receive your order. You can expect delivery between 2- 6 weeks, but we will keep you updated on the status every step of the way.';
+
+    for (const { name } of productStocks) {
+        I.say(`\n🔍 Searching for: ${name}`);
+
+        try {
+            // open search input by clicking magnifier
+            I.click('i.icon-magnifier.icons');
+
+            // wait for the actual search field used in your theme
+            I.waitForElement('#search-input-autocomplate', 10);
+            I.fillField('#search-input-autocomplate', name);
+            I.pressKey('Enter');
+
+            // wait for either results grid or "no results" message
+            I.waitForElement('.products.wrapper.grid, .message.notice', 20);
+
+            // grab all product links safely
+            const links = await I.grabAttributeFromAll('a.product-item-link', 'href');
+
+            if (links.length > 0) {
+                I.click(locate('a.product-item-link').first());
+                I.waitForElement('.page-title', 20);
+
+                const productTitle = await I.grabTextFrom('.page-title');
+                I.say(`Opened product page: ${productTitle}`);
+
+                const pageContent = await I.grabSource();
+
+                if (pageContent.includes(expectedText)) {
+                    I.say(`✅ Rule OK → "${name}" shows the required Class H message.`);
+                } else {
+                    const fail = { name, issue: "Expected Class H message not found." };
+                    failedProducts.push(fail);
+                    I.say(`❌ Rule FAILED → ${fail.name} → ${fail.issue}`);
+                    showFailedList(I, failedProducts);
+                }
+            } else {
+                const fail = { name, issue: "No product link found in search results." };
+                failedProducts.push(fail);
+                I.say(`⚠️ Rule FAILED → ${fail.name} → ${fail.issue}`);
+                showFailedList(I, failedProducts);
+                continue;
+            }
+        } catch (err) {
+            const fail = { name, issue: `Unexpected error during check: ${err.message || err}` };
+            failedProducts.push(fail);
+            I.say(`⚠️ Rule FAILED → ${fail.name} → ${fail.issue}`);
+            showFailedList(I, failedProducts);
+        }
+
+        I.wait(3);
+    }
+
+    if (failedProducts.length > 0) {
+        I.say("\n❌ Final Failed Products List:");
+        failedProducts.forEach((p, i) => {
+            I.say(`${i + 1}. ${p.name} → ${p.issue}`);
+        });
+    } else {
+        I.say("\n✅ All Class H products passed the rule checks!");
+    }
+}
+
+// 🔹 helper to show current failed list
+function showFailedList(I, failedProducts) {
+    I.say("\n📌 Current Failed List:");
+    failedProducts.forEach((p, i) => {
+        I.say(`${i + 1}. ${p.name} → ${p.issue}`);
+    });
+}
+
+
+// 🔹 helper function to grab records from table
+async function getTableRecords(I) {
+    I.waitForElement('table.data-grid', 20);
+
+    // get number of rows
+    const productRows = await I.grabNumberOfVisibleElements('table.data-grid tbody tr');
+    I.say(`Found ${productRows} row(s) in the table`);
+
+    if (!productRows || productRows === 0) {
+        I.say('⚠️ No rows found in this table, skipping...');
+        return [];
+    }
+
+    const records = [];
+
+    for (let i = 1; i <= productRows; i++) {
+        try {
+            // grab all cells in the row
+            const cells = await I.grabTextFromAll(`table.data-grid tbody tr:nth-child(${i}) td`);
+
+            // Magento "no records found" row usually has only 1 <td>
+            if (!cells || cells.length < 6) {
+                I.say(`⚠️ Row ${i} skipped (not enough columns, probably 'no records found')`);
+                continue;
+            }
+
+            const dontShowPrice = cells[4].trim(); // 5th column
+            const name = cells[5].trim();          // 6th column
+
+            records.push({
+                row: i,
+                dontShowPrice,
+                name
+            });
+        } catch (err) {
+            I.say(`⚠️ Skipping row ${i}, error: ${err.message}`);
+            continue;
+        }
+    }
+
+    return records;
+}
 
 
 
@@ -293,5 +495,8 @@ module.exports = {
     getProductNames,
     assertingProducts,
     getProductStocks,
-    assertingPreOrderProducts
+    assertingPreOrderProducts,
+    assertingClassEProducts,
+    assertingClassHProducts,
+    getTableRecords
 };
