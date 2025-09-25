@@ -1,4 +1,4 @@
-const { backendLogin, setupBackend, getTableRecords } = require('../component/login');
+const { backendLogin, setupBackend, getTableRecords } = require('../../component/login');
 
 Feature('Backend Validate Don\'t Show Price');
 

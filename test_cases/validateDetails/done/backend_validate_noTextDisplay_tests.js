@@ -1,4 +1,4 @@
-const { backendLogin, setupBackend, getProductNames, assertingProducts } = require('../component/login');
+const { backendLogin, setupBackend, getProductNames, assertingProducts } = require('../../component/login');
 
 Feature('Backend Validate Tests');
 

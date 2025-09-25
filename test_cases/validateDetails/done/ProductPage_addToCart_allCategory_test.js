@@ -1,6 +1,6 @@
-const { assertProductCategory } = require('../component/Product_Category');
-const { addingProductbyCategory, selectProduct, addToCartAndView } = require('../component/add_to_cart');
-const categories = require('../component/categories');
+const { assertProductCategory } = require('../../component/Product_Category');
+const { addingProductbyCategory, selectProduct, addToCartAndView } = require('../../component/add_to_cart');
+const categories = require('../../component/categories');
 const assert = require('assert');  // add this at the top of your test file
 
 Feature('User Login as Guest, then Add to Cart Product to each Category');

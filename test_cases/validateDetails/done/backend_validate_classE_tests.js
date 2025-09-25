@@ -1,17 +1,20 @@
 const { backendLogin,
         setupBackend,
+        getProductNames,
+        assertingProducts,
         getProductStocks,
-        assertingClassHProducts } = require('../component/login');
+        assertingPreOrderProducts,
+        assertingClassEProducts } = require('../../component/login');
 
-Feature('Backend Validate Tests, Class H');
+Feature('Backend Validate Tests, Class E');
 
-Scenario('Backend Validate Tests for Class H', async ({ I }) => {
+Scenario('Backend Validate Tests for Class E', async ({ I }) => {
     // backend login credentials
     const username = 'aqo';
     const password = '22GaDmjh%iBDG-wZpC';
 
     // list of inventory classes to test
-    const inventoryClass = 'H';
+    const inventoryClass = 'E';
     const pageSetup = false; // Set to true to include page setup steps eg. 999 per page
 
     // 1️⃣ Login once
@@ -30,6 +33,6 @@ Scenario('Backend Validate Tests for Class H', async ({ I }) => {
     const productStocks = await getProductStocks(I);
 
     // ✅ Second step: run the asserting logic with that data
-    await assertingClassHProducts(I, productStocks);
+    await assertingClassEProducts(I, productStocks);
 
 });
