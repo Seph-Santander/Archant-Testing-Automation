@@ -3,13 +3,15 @@ const { backendLogin, setupBackend, getTableRecords } = require('../../component
 Feature('Backend Validate Don\'t Show Price');
 
 Scenario('Backend Validate Don\'t Show Price', async ({ I }) => {
+    // backend login credentials
     const username = 'aqo';
     const password = '22GaDmjh%iBDG-wZpC';
+    const adminLink = 'https://archant246.1902dev1.com/admin_q6TCx2'; // change link if needed
 
     const inventoryClasses = ['A', 'B', 'C', 'D','I', 'M', 'S', 'F', 'E', 'H'];
     const pageSetup = false; 
 
-    await backendLogin(I, username, password);
+    await backendLogin(I, username, password, adminLink);
     I.waitForElement('.modal-header', 20);
 
     // store failures grouped by class

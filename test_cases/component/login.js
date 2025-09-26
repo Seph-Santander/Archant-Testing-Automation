@@ -1,6 +1,25 @@
-async function backendLogin(I, username, password) {
+async function loginArchant(I, email, password, webLink = 'https://archant246.1902dev1.com') {
 
-    I.amOnPage('https://archant246.1902dev1.com/admin_q6TCx2');
+    I.amOnPage(webLink);
+    I.wait(5);
+    
+    I.click('Login'); 
+    I.wait(5);
+
+    I.fillField('#email', email);
+    I.fillField('#pass', password);
+
+    I.click('#send2');
+    I.wait(5);
+
+    I.waitForElement('//a[contains(text(), "Logout")]', 10); 
+    I.see('Logout');
+}
+
+
+async function backendLogin(I, username, password, adminLink = 'https://archant246.1902dev1.com/admin_q6TCx2') {
+
+    I.amOnPage(adminLink);
     I.wait(5);
 
     I.fillField('#username', username);
@@ -482,10 +501,81 @@ async function getTableRecords(I) {
     return records;
 }
 
+async function assertingProductsStockAvailability(I, productStocks) {
+    I.amOnPage('https://archant246.1902dev1.com/');
 
+    const failedProducts = [];
 
+    // 2️⃣ Loop through product names + expected qty
+    for (const { name, qty: expectedQty } of productStocks) {
+        I.say(`🔍 Searching for: ${name} (Expected Qty: ${expectedQty})`);
 
+        // open search input by clicking magnifier
+        I.click('i.icon-magnifier.icons');
 
+        // type the product name
+        I.fillField('#search-input-autocomplate', name);
+
+        // press Enter to search
+        I.pressKey('Enter');
+
+        // wait for search results
+        I.waitForElement('a.product-item-link', 20);
+
+        // grab all product links
+        const links = await I.grabAttributeFrom('a.product-item-link', 'href');
+
+        if (links.length > 0) {
+            // click the first product link
+            I.click(locate('a.product-item-link').first());
+
+            // wait for product page to load
+            I.waitForElement('.page-title', 20);
+            const productTitle = await I.grabTextFrom('.page-title');
+            I.say(`Opened product page: ${productTitle}`);
+
+            try {
+                // ✅ Wait for stock availability container
+                I.waitForElement('.product-info-stock-sku .stock.available', 15);
+                const stockText = await I.grabTextFrom('.product-info-stock-sku .stock.available');
+                I.say(`📦 Stock text on page: ${stockText}`);
+
+                // Extract numeric stock count (e.g. 837)
+                const match = stockText.match(/(\d+)/);
+                let actualQty = match ? parseInt(match[1], 10) : 0;
+
+                // ✅ Assertion check
+                if (actualQty !== expectedQty) {
+                    I.say(`❌ Mismatch for "${productTitle}" → Expected: ${expectedQty}, Found: ${actualQty}`);
+                    failedProducts.push({ product: productTitle, expected: expectedQty, actual: actualQty });
+                } else {
+                    I.say(`✅ Stock matches for "${productTitle}" → Qty: ${actualQty}`);
+                }
+            } catch (err) {
+                // 📸 Debug when stock element not found
+                I.say(`❌ Stock element not found for "${productTitle}"`);
+                await I.saveScreenshot(`missing_stock_${Date.now()}.png`);
+                const html = await I.grabSource();
+                I.say(`🔍 Dumping HTML for debug:\n${html.substring(0, 500)}...`); // show first 500 chars
+                failedProducts.push({ product: productTitle, expected: expectedQty, actual: 'Stock element not found' });
+            }
+        } else {
+            I.say(`⚠️ No product link found for "${name}"`);
+            failedProducts.push({ product: name, expected: expectedQty, actual: 'Not Found' });
+        }
+
+        // wait 5 seconds before next search
+        I.wait(5);
+    }
+
+    // Final assertion summary
+    if (failedProducts.length > 0) {
+        throw new Error(`❌ Stock mismatch found:\n${failedProducts.map(f => 
+            `- ${f.product}: Expected ${f.expected}, Found ${f.actual}`).join("\n")}`);
+    } else {
+        I.say("🎉 All product stocks match between backend and frontend!");
+    }
+}
 
 
 
@@ -498,5 +588,7 @@ module.exports = {
     assertingPreOrderProducts,
     assertingClassEProducts,
     assertingClassHProducts,
-    getTableRecords
+    getTableRecords,
+    loginArchant,
+    assertingProductsStockAvailability
 };

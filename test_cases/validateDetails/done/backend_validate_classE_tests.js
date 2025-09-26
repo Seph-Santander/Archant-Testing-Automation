@@ -12,13 +12,15 @@ Scenario('Backend Validate Tests for Class E', async ({ I }) => {
     // backend login credentials
     const username = 'aqo';
     const password = '22GaDmjh%iBDG-wZpC';
+    const adminLink = 'https://archant246.1902dev1.com/admin_q6TCx2'; // change link if needed
+
 
     // list of inventory classes to test
     const inventoryClass = 'E';
     const pageSetup = false; // Set to true to include page setup steps eg. 999 per page
 
     // 1️⃣ Login once
-    await backendLogin(I, username, password);
+    await backendLogin(I, username, password, adminLink);
     I.waitForElement('.modal-header', 20);
 
     I.say(`======================`);
