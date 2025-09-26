@@ -49,5 +49,8 @@ Scenario('Validate stock for all inventory classes', async ({ I }) => {
         // 3️⃣ Assert stocks on frontend
         await assertingProductsStockAvailability(I, productStocks);
     }
+
+
+    
     I.say("🎉 Completed stock validation for all inventory classes!");
 });
